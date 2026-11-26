@@ -1,0 +1,4 @@
+module CVkCore {
+    header "vk_coreFFI.h"
+    export *
+}
