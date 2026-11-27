@@ -80,7 +80,7 @@ struct PostDetailView: View {
                                                 .foregroundStyle(.secondary)
                                         }
                                         if !comment.text.isEmpty {
-                                            Text(comment.text)
+                                            Text(VkLinkHandler.linkify(comment.text))
                                                 .font(.callout)
                                                 .textSelection(.enabled)
                                         }

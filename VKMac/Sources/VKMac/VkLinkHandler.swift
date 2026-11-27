@@ -81,4 +81,53 @@ enum VkLinkHandler {
         NSWorkspace.shared.open(url)
         return .handled
     }
+
+    static func linkify(_ rawText: String, isOutgoing: Bool = false) -> AttributedString {
+        // Convert VK mentions like [id123|Name] or [club123|Name] into plain text + link ranges
+        var displayText = rawText
+        var explicitLinks: [(NSRange, URL)] = []
+
+        if let mentionRegex = try? NSRegularExpression(pattern: #"\[(id\d+|club\d+|public\d+|event\d+)\|([^\]]+)\]"#) {
+            while let match = mentionRegex.firstMatch(in: displayText, range: NSRange(displayText.startIndex..., in: displayText)) {
+                guard let fullRange = Range(match.range, in: displayText),
+                      let targetRange = Range(match.range(at: 1), in: displayText),
+                      let labelRange = Range(match.range(at: 2), in: displayText) else { break }
+                let target = String(displayText[targetRange])
+                let label = String(displayText[labelRange])
+                let startOffset = displayText.utf16.distance(from: displayText.utf16.startIndex, to: fullRange.lowerBound)
+                displayText.replaceSubrange(fullRange, with: label)
+                if let url = URL(string: "https://vk.com/\(target)") {
+                    explicitLinks.append((NSRange(location: startOffset, length: label.utf16.count), url))
+                }
+            }
+        }
+
+        var attributed = AttributedString(displayText)
+        let linkColor: Color = isOutgoing ? .white : .accentColor
+
+        for (nsRange, url) in explicitLinks {
+            if let strRange = Range(nsRange, in: displayText),
+               let attrRange = Range(strRange, in: attributed) {
+                attributed[attrRange].link = url
+                attributed[attrRange].underlineStyle = .single
+                attributed[attrRange].foregroundColor = linkColor
+            }
+        }
+
+        if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) {
+            let fullNSRange = NSRange(displayText.startIndex..., in: displayText)
+            for match in detector.matches(in: displayText, range: fullNSRange) {
+                guard let url = match.url,
+                      let strRange = Range(match.range, in: displayText),
+                      let attrRange = Range(strRange, in: attributed) else { continue }
+                if attributed[attrRange].link == nil {
+                    attributed[attrRange].link = url
+                    attributed[attrRange].underlineStyle = .single
+                    attributed[attrRange].foregroundColor = linkColor
+                }
+            }
+        }
+
+        return attributed
+    }
 }

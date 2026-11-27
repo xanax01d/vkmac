@@ -973,7 +973,7 @@ private struct MessageBubble: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 if !message.text.isEmpty {
-                    Text(message.text)
+                    Text(VkLinkHandler.linkify(message.text, isOutgoing: message.isOut))
                         .textSelection(.enabled)
                 }
 

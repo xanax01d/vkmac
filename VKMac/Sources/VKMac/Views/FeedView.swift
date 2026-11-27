@@ -220,7 +220,7 @@ struct FeedPostCard: View {
             .buttonStyle(.plain)
 
             if !post.text.isEmpty {
-                Text(post.text)
+                Text(VkLinkHandler.linkify(post.text))
                     .font(.body)
                     .textSelection(.enabled)
             }
