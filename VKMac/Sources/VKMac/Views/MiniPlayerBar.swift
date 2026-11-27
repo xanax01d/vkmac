@@ -32,6 +32,8 @@ struct MiniPlayerBar: View {
                             audioPlayer.previousTrack()
                         } label: {
                             Image(systemName: "backward.fill")
+                                .frame(width: 24, height: 24)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.borderless)
 
@@ -40,6 +42,8 @@ struct MiniPlayerBar: View {
                         } label: {
                             Image(systemName: audioPlayer.isPlaying ? "pause.circle.fill" : "play.circle.fill")
                                 .font(.title2)
+                                .frame(width: 28, height: 28)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.borderless)
 
@@ -47,6 +51,8 @@ struct MiniPlayerBar: View {
                             audioPlayer.nextTrack()
                         } label: {
                             Image(systemName: "forward.fill")
+                                .frame(width: 24, height: 24)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.borderless)
                     }

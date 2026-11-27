@@ -149,6 +149,7 @@ final class AudioPlayerService: ObservableObject {
     }
 
     func play(track: AudioTrack, in queue: [AudioTrack]? = nil) {
+        NSLog("[VKMac Audio] play: %@ — %@ (queue arg count: %d, existing queue: %d)", track.artist, track.title, queue?.count ?? -1, self.queue.count)
         if let queue, !queue.isEmpty {
             self.queue = queue
             if let idx = queue.firstIndex(where: { $0.id == track.id && $0.ownerId == track.ownerId }) {
@@ -256,9 +257,10 @@ final class AudioPlayerService: ObservableObject {
         localURLResolver?(track) != nil || track.streamUrl.flatMap(URL.init(string:)) != nil
     }
 
-    func nextTrack() {
+    func nextTrack(fromAutoEnd: Bool = false) {
+        NSLog("[VKMac Audio] nextTrack(auto=%d): index=%d, queue=%d, repeat=%@", fromAutoEnd ? 1 : 0, currentIndex, queue.count, repeatMode.rawValue)
         guard !queue.isEmpty else { return }
-        if repeatMode == .one, let track = currentTrack {
+        if fromAutoEnd && repeatMode == .one, let track = currentTrack {
             seek(to: 0)
             loadAndPlay(track)
             return
@@ -520,7 +522,7 @@ final class AudioPlayerService: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.nextTrack()
+                self?.nextTrack(fromAutoEnd: true)
             }
         }
 
