@@ -253,24 +253,27 @@ struct MusicView: View {
                         audioPlayer.play(track: track, in: items)
                     }
                 } label: {
-                    Image(systemName: isCurrent && audioPlayer.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(isCurrent ? appState.accentColor : Color.primary)
-                }
-                .buttonStyle(.borderless)
+                    HStack(spacing: 12) {
+                        Image(systemName: isCurrent && audioPlayer.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(isCurrent ? appState.accentColor : Color.primary)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(track.title)
-                        .font(.body.weight(isCurrent ? .semibold : .regular))
-                        .foregroundStyle(isCurrent ? appState.accentColor : Color.primary)
-                        .lineLimit(1)
-                    Text(track.artist)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(track.title)
+                                .font(.body.weight(isCurrent ? .semibold : .regular))
+                                .foregroundStyle(isCurrent ? appState.accentColor : Color.primary)
+                                .lineLimit(1)
+                            Text(track.artist)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
 
-                Spacer()
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
 
                 if appState.offlineAudioIds.contains(appState.offlineAudioKey(track)) {
                     Image(systemName: "arrow.down.circle.fill")
@@ -284,14 +287,6 @@ struct MusicView: View {
                     .foregroundStyle(.secondary)
             }
             .padding(.vertical, 4)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                if isCurrent {
-                    audioPlayer.togglePlayPause()
-                } else {
-                    audioPlayer.play(track: track, in: items)
-                }
-            }
             .contextMenu {
                 Button("Играть следующим") {
                     audioPlayer.playNext(track)

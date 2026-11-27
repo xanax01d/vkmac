@@ -12,7 +12,7 @@ struct MiniPlayerBar: View {
         if let track = audioPlayer.currentTrack {
             VStack(spacing: 0) {
                 Divider()
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     coverView(urlString: track.coverUrl)
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -24,8 +24,7 @@ struct MiniPlayerBar: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
-                    .frame(minWidth: 160, maxWidth: 240, alignment: .leading)
-                    .layoutPriority(1)
+                    .frame(minWidth: 90, idealWidth: 150, maxWidth: 200, alignment: .leading)
 
                     HStack(spacing: 8) {
                         Button {
@@ -124,7 +123,7 @@ struct MiniPlayerBar: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Slider(value: $audioPlayer.volume, in: 0...1)
-                                .frame(width: 64)
+                                .frame(width: 48)
                         }
 
                         Menu {
