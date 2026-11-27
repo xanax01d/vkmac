@@ -40,7 +40,7 @@ final class AudioPlayerService: ObservableObject {
     }
 
     var onTrackStarted: ((AudioTrack) -> Void)?
-    var onQueueEnded: (() -> Void)?
+    var onQueueEnded: (() -> Bool)?
     var localURLResolver: ((AudioTrack) -> URL?)?
     @Published var crossfadeSeconds: Double = 0
 
@@ -291,8 +291,7 @@ final class AudioPlayerService: ObservableObject {
             }
         }
 
-        if let onQueueEnded {
-            onQueueEnded()
+        if let onQueueEnded, onQueueEnded() {
             return
         }
         pause()
@@ -434,6 +433,8 @@ final class AudioPlayerService: ObservableObject {
         let localUrl = localURLResolver?(track)
         let resolvedUrl: URL? = localUrl ?? track.streamUrl.flatMap(URL.init(string:))
         guard let url = resolvedUrl else {
+            player.pause()
+            player.replaceCurrentItem(with: nil)
             isPlaying = false
             updateNowPlayingInfo()
             return

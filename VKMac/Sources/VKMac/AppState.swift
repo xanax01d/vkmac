@@ -185,6 +185,7 @@ final class AppState: ObservableObject {
                 self?.offlineAudioURL(for: track)
             }
             AudioPlayerService.shared.onQueueEnded = { [weak self] in
+                guard let self, self.infiniteWave else { return false }
                 Task { @MainActor [weak self] in
                     guard let self, self.infiniteWave else { return }
                     await self.loadRecommendations()
@@ -192,6 +193,7 @@ final class AppState: ObservableObject {
                         AudioPlayerService.shared.appendAndPlayNext(self.recommendedTracks)
                     }
                 }
+                return true
             }
             requestNotificationPermission()
 
