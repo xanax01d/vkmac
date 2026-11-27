@@ -213,7 +213,7 @@ final class TouchBarController: NSObject, NSTouchBarDelegate {
 
             let fitWidth = scrollView.widthAnchor.constraint(equalTo: stack.widthAnchor)
             fitWidth.priority = .defaultHigh
-            let maxScrollWidth: CGFloat = currentTrackTitle.isEmpty ? 460 : 240
+            let maxScrollWidth: CGFloat = currentTrackTitle.isEmpty ? 460 : 210
 
             NSLayoutConstraint.activate([
                 stack.topAnchor.constraint(equalTo: scrollView.contentView.topAnchor),
@@ -500,7 +500,7 @@ private final class TouchBarTrackView: NSView {
 
         NSLayoutConstraint.activate([
             heightAnchor.constraint(equalToConstant: 30),
-            widthAnchor.constraint(lessThanOrEqualToConstant: 215),
+            widthAnchor.constraint(equalToConstant: 175),
             label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
             label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
             label.centerYAnchor.constraint(equalTo: centerYAnchor)
