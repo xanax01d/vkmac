@@ -338,6 +338,7 @@ private struct EQPopoverView: View {
             .onChange(of: appState.eqPreset) { val in
                 if let bands = presets[val] {
                     appState.eqBands = bands
+                    AudioPlayerService.shared.applyEQ(bands: bands)
                 }
             }
             ForEach(0..<5, id: \.self) { idx in
@@ -348,7 +349,10 @@ private struct EQPopoverView: View {
                     Slider(
                         value: Binding(
                             get: { appState.eqBands[idx] },
-                            set: { appState.eqBands[idx] = $0 }
+                            set: {
+                                appState.eqBands[idx] = $0
+                                AudioPlayerService.shared.applyEQ(bands: appState.eqBands)
+                            }
                         ),
                         in: -12...12
                     )
@@ -356,6 +360,11 @@ private struct EQPopoverView: View {
                         .font(.caption2.monospacedDigit())
                         .frame(width: 36, alignment: .trailing)
                 }
+            }
+            if !AudioPlayerService.shared.isEngineEQActive {
+                Text("Активен для скачанных (офлайн) треков; потоки .m3u8 воспроизводятся напрямую.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(12)
