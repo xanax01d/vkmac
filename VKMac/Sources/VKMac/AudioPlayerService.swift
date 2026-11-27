@@ -44,7 +44,8 @@ final class AudioPlayerService: ObservableObject {
     var localURLResolver: ((AudioTrack) -> URL?)?
     @Published var crossfadeSeconds: Double = 0
 
-    private let player = AVPlayer()
+    private var player = AVPlayer()
+    private var secondaryPlayer = AVPlayer()
     private let audioEngine = AVAudioEngine()
     private let enginePlayerNode = AVAudioPlayerNode()
     private let eqNode = AVAudioUnitEQ(numberOfBands: 5)
@@ -54,7 +55,6 @@ final class AudioPlayerService: ObservableObject {
     private var usingEngine: Bool = false
     private var eqSetupDone: Bool = false
 
-    private var fadingOutPlayer: AVPlayer?
     private var fadeTask: Task<Void, Never>?
     private var timeObserver: Any?
     private var endObserver: NSObjectProtocol?
@@ -177,6 +177,9 @@ final class AudioPlayerService: ObservableObject {
     }
 
     func pause() {
+        fadeTask?.cancel()
+        secondaryPlayer.pause()
+        secondaryPlayer.replaceCurrentItem(with: nil)
         if usingEngine {
             enginePlayerNode.pause()
             engineTimer?.invalidate()
@@ -232,6 +235,9 @@ final class AudioPlayerService: ObservableObject {
         sleepTimerTask = nil
         sleepTimerMinutesRemaining = nil
         stopEngine()
+        fadeTask?.cancel()
+        secondaryPlayer.pause()
+        secondaryPlayer.replaceCurrentItem(with: nil)
         player.pause()
         player.replaceCurrentItem(with: nil)
         currentTrack = nil
@@ -277,7 +283,9 @@ final class AudioPlayerService: ObservableObject {
 
         var candidate = currentIndex + 1
         while candidate < queue.count {
-            if isPlayable(queue[candidate]) {
+            let playable = isPlayable(queue[candidate])
+            NSLog("[VKMac Audio] nextTrack check candidate=%d (%@) playable=%d stream=%@", candidate, queue[candidate].title, playable ? 1 : 0, queue[candidate].streamUrl ?? "nil")
+            if playable {
                 currentIndex = candidate
                 loadAndPlay(queue[currentIndex])
                 return
@@ -293,7 +301,9 @@ final class AudioPlayerService: ObservableObject {
             }
         }
 
+        NSLog("[VKMac Audio] nextTrack reached end of queue without playable track")
         if let onQueueEnded, onQueueEnded() {
+            NSLog("[VKMac Audio] nextTrack delegated to onQueueEnded")
             return
         }
         pause()
@@ -426,6 +436,7 @@ final class AudioPlayerService: ObservableObject {
     }
 
     private func loadAndPlay(_ track: AudioTrack) {
+        NSLog("[VKMac Audio] loadAndPlay: %@ — %@ (stream=%@)", track.artist, track.title, track.streamUrl ?? "nil")
         currentTrack = track
         currentTime = 0
         duration = Double(track.durationSec)
@@ -526,34 +537,44 @@ final class AudioPlayerService: ObservableObject {
             }
         }
 
-        if crossfadeSeconds > 0, let prevItem = player.currentItem, isPlaying {
-            let fadeOut = AVPlayer(playerItem: prevItem)
-            fadeOut.volume = volume
-            fadeOut.play()
-            fadingOutPlayer = fadeOut
+        if crossfadeSeconds > 0, player.currentItem != nil, isPlaying {
+            fadeTask?.cancel()
+            secondaryPlayer.pause()
+            secondaryPlayer.replaceCurrentItem(with: nil)
+            if let timeObserver {
+                player.removeTimeObserver(timeObserver)
+                self.timeObserver = nil
+            }
+            let outgoing = player
+            player = secondaryPlayer
+            secondaryPlayer = outgoing
+            setupTimeObserver()
+
             let steps = 15
             let stepNs = UInt64((crossfadeSeconds / Double(steps)) * 1_000_000_000)
             let targetVol = volume
-            fadeTask?.cancel()
             fadeTask = Task { [weak self] in
                 for i in 1...steps {
                     try? await Task.sleep(nanoseconds: stepNs)
                     guard !Task.isCancelled else { return }
                     let frac = Float(i) / Float(steps)
                     await MainActor.run {
-                        self?.fadingOutPlayer?.volume = targetVol * (1.0 - frac)
+                        self?.secondaryPlayer.volume = targetVol * (1.0 - frac)
                         self?.player.volume = targetVol * frac
                     }
                 }
                 await MainActor.run {
-                    self?.fadingOutPlayer?.pause()
-                    self?.fadingOutPlayer = nil
+                    self?.secondaryPlayer.pause()
+                    self?.secondaryPlayer.replaceCurrentItem(with: nil)
                     self?.player.volume = targetVol
                 }
             }
             player.replaceCurrentItem(with: item)
             player.volume = 0
         } else {
+            fadeTask?.cancel()
+            secondaryPlayer.pause()
+            secondaryPlayer.replaceCurrentItem(with: nil)
             player.replaceCurrentItem(with: item)
             player.volume = volume
         }
