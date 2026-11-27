@@ -293,6 +293,7 @@ final class AudioPlayerService: ObservableObject {
 
         if let onQueueEnded {
             onQueueEnded()
+            return
         }
         pause()
         seek(to: 0)

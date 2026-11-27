@@ -284,6 +284,14 @@ struct MusicView: View {
                     .foregroundStyle(.secondary)
             }
             .padding(.vertical, 4)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if isCurrent {
+                    audioPlayer.togglePlayPause()
+                } else {
+                    audioPlayer.play(track: track, in: items)
+                }
+            }
             .contextMenu {
                 Button("Играть следующим") {
                     audioPlayer.playNext(track)
